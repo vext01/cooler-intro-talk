@@ -181,13 +181,241 @@
 	\end{itemize}
 	\vfill
 
-	\begin{lstlisting}[caption={A compiler-induced vulnerability.}]
-	// password no longer used                                                      
-	memset(password, '\0', len);  // line optimised away                            
-	free(password);                                                                 
+	\begin{lstlisting}
+	// password no longer used
+	memset(password, '\0', len);  // line optimised away
+	free(password);
 	\end{lstlisting}
 	\vfill
 
+
+\end{frame}
+
+\subsection{The General Approach}
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+        Often, reversing and verification amounts to collecting the
+        potential values that may arise at each point in a program.
+\end{frame}
+
+\subsection{Concrete Interpretation}
+
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+	\vspace{-1cm}
+	\begin{center}
+	\begin{minipage}{.5\textwidth}
+	\begin{tabbing}
+		1234\=1234\=1234\=\kill
+		1:\>$x \leftarrow 6$\\
+		2:\>while $x > 0$ do\\
+		3:\>\>x $\leftarrow x - 2$\\
+		4:\>done\\
+		5:\>
+	\end{tabbing}
+	\end{minipage}\qquad\qquad~~
+	\begin{minipage}{.5\textwidth}
+		\tikzstyle{nnn}=[circle]
+		\begin{tikzpicture}[auto,node distance=1.3cm, thick]
+			\node[nnn] (n1) {1};
+			\node[nnn] (n2) [below of=n1] {2};
+			\node[nnn] (n3) [below of=n2] {3};
+			\node[nnn] (n4) [below of=n3] {4};
+			\node[nnn] (n5) [below left of=n2] {5};
+			\draw [->] (n1) -- (n2);
+			\draw [->] (n2) -- (n3);
+			\draw [->] (n3) -- (n4);
+			\draw [->] (n2) -- (n5);
+			\draw [->] (n4) to [out=0, in=0] (n2);
+		\end{tikzpicture}
+	\end{minipage}
+	\end{center}
+	\vfill
+
+	\begin{overlayarea}{\textwidth}{0cm}
+		\vspace{-1cm}
+	\only<1>{%
+	\[
+		\begin{array}{rcl}
+		S_1 &=& \top\\
+		S_2 &=& \{6\} \cup S_4\\
+		S_3 &=& \{ x \mid x \in S_2 \wedge x > 0 \}\\
+		S_4 &=& \{x - 2 \mid x \in S_3 \}\\
+		S_5 &=& \{x \mid x \in S_2 \wedge x \leq 0\}
+		\end{array}
+	\]
+	}
+	\only<2>{%
+	\[
+	\begin{array}{rcl}
+		S_1 &=& \top\\
+		S_2 &=& \{6, 4, 2, 0\}\\
+		S_3 &=& \{6, 4, 2\}\\
+		S_4 &=& \{4, 2, 0\}\\
+		S_5 &=& \{0\}\\
+	\end{array}
+	\]
+	}
+	\end{overlayarea}
+	\vfill
+\end{frame}
+
+\subsection{Concrete Interpretation (2)}
+
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+	\vspace{-1cm}
+	\begin{center}
+	\begin{minipage}{.5\textwidth}
+	\begin{tabbing}
+		1234\=1234\=1234\=\kill
+		1:\>$x \leftarrow {\color{red}{66666}}$\\
+		2:\>while $x > 0$ do\\
+		3:\>\>x $\leftarrow x - 2$\\
+		4:\>done\\
+		5:\>
+	\end{tabbing}
+	\end{minipage}\qquad\qquad~~
+	\begin{minipage}{.5\textwidth}
+		\tikzstyle{nnn}=[circle]
+		\begin{tikzpicture}[auto,node distance=1.3cm, thick]
+			\node[nnn] (n1) {1};
+			\node[nnn] (n2) [below of=n1] {2};
+			\node[nnn] (n3) [below of=n2] {3};
+			\node[nnn] (n4) [below of=n3] {4};
+			\node[nnn] (n5) [below left of=n2] {5};
+			\draw [->] (n1) -- (n2);
+			\draw [->] (n2) -- (n3);
+			\draw [->] (n3) -- (n4);
+			\draw [->] (n2) -- (n5);
+			\draw [->] (n4) to [out=0, in=0] (n2);
+		\end{tikzpicture}
+	\end{minipage}
+	\end{center}
+	\vfill
+
+	\begin{overlayarea}{\textwidth}{0cm}
+		\vspace{-1cm}
+	\only<1>{%
+	\[
+		\begin{array}{rcl}
+		S_1 &=& \top\\
+			S_2 &=& \{{\color{red}{66666}}\} \cup S_4\\
+		S_3 &=& \{ x \mid x \in S_2 \wedge x > 0 \}\\
+		S_4 &=& \{x - 2 \mid x \in S_3 \}\\
+		S_5 &=& \{x \mid x \in S_2 \wedge x \leq 0\}
+		\end{array}
+	\]
+	}
+	\only<2>{%
+	\[
+	\begin{array}{rcl}
+		S_1 &=& \top\\
+		S_2 &=& \{66666, 66664, \ldots, 2, 0\}\\
+		S_3 &=& \{66666, 66664, \ldots, 4, 2\}\\
+		S_4 &=& \{66664, 66662, \ldots, 2, 0\}\\
+		S_5 &=& \{0\}\\
+	\end{array}
+	\]
+	}
+	\end{overlayarea}
+	\vfill
+\end{frame}
+
+\subsection{Abstract Interpretation with Intervals}
+
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+	\vspace{-1cm}
+	\begin{center}
+	\begin{minipage}{.5\textwidth}
+	\begin{tabbing}
+		1234\=1234\=1234\=\kill
+		1:\>$x \leftarrow 66666$\\
+		2:\>while $x > 0$ do\\
+		3:\>\>x $\leftarrow x - 2$\\
+		4:\>done\\
+		5:\>
+	\end{tabbing}
+	\end{minipage}\qquad\qquad~~
+	\begin{minipage}{.5\textwidth}
+		\tikzstyle{nnn}=[circle]
+		\begin{tikzpicture}[auto,node distance=1.3cm, thick]
+			\node[nnn] (n1) {1};
+			\node[nnn] (n2) [below of=n1] {2};
+			\node[nnn] (n3) [below of=n2] {3};
+			\node[nnn] (n4) [below of=n3] {4};
+			\node[nnn] (n5) [below left of=n2] {5};
+			\draw [->] (n1) -- (n2);
+			\draw [->] (n2) -- (n3);
+			\draw [->] (n3) -- (n4);
+			\draw [->] (n2) -- (n5);
+			\draw [->] (n4) to [out=0, in=0] (n2);
+		\end{tikzpicture}
+	\end{minipage}
+	\end{center}
+	\vfill
+
+	\begin{overlayarea}{\textwidth}{0cm}
+		\vspace{-1cm}
+	\only<1>{%
+	\[
+		\begin{array}{rcl}
+		S'_1 &=& \top\\
+		S'_2 &=& [66666, 66666] \sqcup S'_4\\
+		S'_3 &=& S'_2 \sqcap [1, +\infty]\\
+		S'_4 &=& S'_3 - [2,2]\\
+		S'_5 &=& S'_2 \sqcap [-\infty, 0]\\
+		\end{array}
+	\]
+	}
+	\only<2>{%
+	\[
+	\begin{array}{rcl}
+		S_1 &=& \top\\
+		S_2 &=& [-1, 66666]\\
+		S_3 &=& [1, 66666]\\
+		S_4 &=& [-1, 66664]\\
+		S_5 &=& [-1, 0]
+	\end{array}
+	\]
+	}
+	\end{overlayarea}
+	\vfill
+\end{frame}
+
+
+\subsection{So What's the Problem?}
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+	\begin{itemize}
+		\item The control flow graph (CFG) is required.
+		\item Indirect jumps in binary code make the CFG hard to extract.
+	\end{itemize}
+
+	\vfill
+
+\begin{lstlisting}
+mov eax, [ebp-0x8]  ; eax := *(ebp - 8)
+sub eax, 0x2        ; eax := eax - 2
+cmp eax, 0x5        ; cf := (0 =< eax < 5)
+                    ; zf := (eax = 5)
+ja  0xd8            ; jump if cf = 0 and zf = 0
+jmp [0x8048a0c + eax*4]
+\end{lstlisting}
+\vfill
+
+	\begin{itemize}
+	\item Need to know the possible values of \texttt{eax} at the \texttt{jmp}.
+	\item Can't get the register values without the CFG.
+	\item Can't get CFG without the register values.
+	\end{itemize}
+\vfill
 \end{frame}
 
 \end{document}
