@@ -1,0 +1,193 @@
+\documentclass[compress]{beamer}
+
+\usepackage{tikz}
+\usepackage{charter}   % Use the serif font charter
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows}
+\usepackage{scalefnt}
+
+\usefonttheme{serif}
+
+%\usetheme{Madrid}
+
+
+\definecolor{kentblue}{cmyk}{1.0,0.58,0,0.21}
+\definecolor{kentpink}{cmyk}{0,1.0,0.13,0.17}
+\definecolor{gray80}{rgb}{0.2,0.2,0.2}
+\definecolor{gray10}{rgb}{0.8, 0.8, 0.8}
+\definecolor{mygreen}{rgb}{0,0.5,0}
+
+\usebeamercolor[bg]{frametitle}
+\setbeamercolor{frametitle}{bg=kentblue}
+\setbeamercolor{frametitle}{fg=white}
+\setbeamercolor{title}{fg=kentpink}
+\setbeamercolor{block title}{fg=kentpink}
+\setbeamercolor{section in head}{bg=black}
+\setbeamercolor{palette secondary}{fg=white,bg=kentblue}
+\setbeamercolor{palette primary}{bg=gray80,fg=white}
+\setbeamercolor{palette tertiary}{bg=black,fg=white}
+\setbeamercolor{palette quaternary}{bg=black,fg=white}
+
+
+%\logo{\includegraphics[height=1cm]{kent-logo}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+\setbeamertemplate{block begin}{
+  \vskip.75ex
+  \begin{beamercolorbox}[ht=3.5ex,dp=0.5ex,center,leftskip=-1em,colsep*=.75ex]{block title}%
+    \usebeamerfont*{block title}%
+    {\phantom{Gg}\insertblocktitle}% phantom because of baseline problem
+  \end{beamercolorbox}%
+  {\ifbeamercolorempty[bg]{block body}{}{\nointerlineskip\vskip-0.5pt}}%
+  \usebeamerfont{block body}%
+  \begin{beamercolorbox}[leftskip=1em,colsep*=.75ex,sep=0.5ex,vmode]{block body}%
+    \ifbeamercolorempty[bg]{block body}{\vskip-.25ex}{\vskip-.75ex}\vbox{}%
+}
+\setbeamertemplate{block end}{
+  \end{beamercolorbox}
+}
+
+%\tikzstyle{prog} = [rectangle, text centered]
+%\tikzstyle{block} = [rectangle, draw, text centered]
+%\tikzstyle{line} = [draw, -latex']
+%\tikzstyle{end} = [node distance=3cm, minimum height=2em]
+%\tikzstyle{node} = [circle, draw, text centered, minimum width=.2cm]
+
+\title{Research: Past and Present}
+\author{Edd Barrett}
+\date{\today}
+
+\institute{%
+	Software Development Team\\
+	King's College London, England
+}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  stringstyle=\ttfamily,
+  framexleftmargin=1pt,
+  frame=tb,
+  backgroundcolor=\color{white}
+}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\section{Past Research}
+
+\begin{frame}
+  \sectionpage
+\end{frame}
+
+\subsection{Reverse Engineering and Verification}
+
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+	Two subjects of growing imprtance:
+	\vfill
+	\begin{block}{Reverse Engineering}
+                The art of developing an understanding of a program from
+                the compiled code alone
+	\end{block}
+	\vfill
+	\begin{block}{Verification}
+                Proving that a software product conforms to a set of
+                safety, correctness and reliability criteria.
+	\end{block}
+
+\end{frame}
+
+
+\subsection{Applications for Reverse Engineering}
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+	\begin{itemize}
+		\vfill
+	\item Malware detection and classification.
+		\vfill
+	\item Loss of code.
+		\vfill
+	\item Penetration testing.
+		\vfill
+	\item Interfacing and interoperating.
+		\vfill
+	\end{itemize}
+
+\end{frame}
+
+\subsection{Applications for Verification}
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+	\begin{itemize}
+		\vfill
+	\item Checking memory safety.
+		\vfill
+	\item Proving error state unreachability.
+		\vfill
+	\item Proving an upper bound on memory consumption.
+		\vfill
+	\item Proving worst case execution time.
+		\vfill
+	\end{itemize}
+
+\end{frame}
+
+
+\subsection{Why at the Binary Level}
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+	But why work at the binary level?
+	\vfill
+
+	\begin{block}{Reverse Engineering}
+		\begin{itemize}
+		\item No access to source code.
+		\item No choice.
+		\end{itemize}
+	\end{block}
+
+	\vfill
+
+	\begin{block}{Verification}
+		\begin{itemize}
+		\item Traditionally done at the source level.
+		\item Good reasons for doing it at the binary level.
+		\end{itemize}
+	\end{block}
+
+\end{frame}
+
+
+\subsection{WYSINWYX}
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+	\textbf{\Large W}hat \textbf{\Large Y}ou \textbf{\Large S}ee \textbf{\Large I}s \textbf{\Large N}ot \textbf{\Large W}hat \textbf{\Large Y}ou e\textbf{\Large X}ecute.
+	\vfill
+
+	\begin{itemize}
+		\item It is not the source code that is executed\footnote{Forget scripting languages and VMs for now.}.
+		\item Compilers are often ``too clever''.
+		\item Compilers are also buggy.
+	\end{itemize}
+	\vfill
+
+	\begin{lstlisting}[caption={A compiler-induced vulnerability.}]
+	// password no longer used                                                      
+	memset(password, '\0', len);  // line optimised away                            
+	free(password);                                                                 
+	\end{lstlisting}
+	\vfill
+
+\end{frame}
+
+\end{document}
