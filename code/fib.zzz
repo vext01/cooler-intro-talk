@@ -1,0 +1,24 @@
+fib:
+	PICK r2, 1 # get argument off stack
+	PUSH r3 # callee save
+	PUSH r4
+	JE base, r2, 0 # check for base cases
+	JE base, r2, 1
+	MOV r3, r2 # copy arg
+	SUB r3, 1
+	PUSH r3
+	CALL fib
+	DROP
+	MOV r4, r1 # lhs result in r4
+	SUB r3, 1
+	PUSH r3
+	CALL fib
+	DROP
+	ADD r1, r4 # rhs result in r1
+	JMP done
+base:
+	mov r1, r2 # in base cases, return argument
+done:
+	POP r4 # callee restore
+	POP r3
+	RET # return result of the above addition in r1
