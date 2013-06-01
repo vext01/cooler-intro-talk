@@ -17,7 +17,7 @@ fib:
 	ADD r1, r4 # rhs result in r1
 	JMP done
 base:
-	mov r1, r2 # in base cases, return argument
+	MOV r1, r2 # in base cases, return argument
 done:
 	POP r4 # callee restore
 	POP r3
