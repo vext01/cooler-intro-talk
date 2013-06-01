@@ -78,7 +78,7 @@
   \titlepage
 \end{frame}
 
-\section{Past Research}
+\section{Range Analysis of Binaries with Decision Procedures}
 
 \begin{frame}
   \sectionpage
@@ -414,8 +414,271 @@ jmp [0x8048a0c + eax*4]
 	\item Need to know the possible values of \texttt{eax} at the \texttt{jmp}.
 	\item Can't get the register values without the CFG.
 	\item Can't get CFG without the register values.
+	\item Need to consider bitwise details.
 	\end{itemize}
 \vfill
+\end{frame}
+
+
+\subsection{Determining Indirect Jump Addresses with SAT}
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+	\begin{itemize}
+	\item CPU instructions can be encoded as Boolean formulae.
+	\end{itemize}
+	\vfill
+	E.g. \texttt{shl eax, 2}:
+
+	\[
+                \neg eax'_{0} \wedge \neg eax'_{1} \wedge (eax'_{2}
+                \Leftrightarrow eax_{0}) \wedge \ldots \wedge (eax'_{31}
+                \Leftrightarrow eax_{29})
+	\]
+
+	%Where $\vec{eax}$ and $\vec{eax'}$ represent \texttt{eax} prior to and after the shift.
+
+	\vfill
+
+	\begin{itemize}
+	\item These formulae can be composed to model blocks of code.
+	\end{itemize}
+
+\end{frame}
+
+
+\subsection{Determining Indirect Jump Addresses with SAT (2)}
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+	Chapters 3 and 4 of my Thesis show that, given such a formula:
+
+	\vfill
+
+	\begin{itemize}
+	\item A range of values can be derived for a bit vector of interest.
+		\begin{itemize}
+		\item E.g. Possible indirect jump addresses.
+		\item Only $2n$ calls to a SAT solver, ($n$ is the width of the vector).
+		\item Incremental SAT.
+		\end{itemize}
+
+		\vfill
+
+	\item The range can be refined into a more precise set.
+		\begin{itemize}
+		\item Requires quantifier elimination.
+		\end{itemize}
+	\end{itemize}
+
+	\vfill
+
+	Using the above, indirect jumps can be resolved.
+
+\end{frame}
+
+\subsection{Slow Convergence}
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+	\begin{itemize}
+	\item Now we have the CFG.
+		\begin{itemize}
+		\item Abstract interpretation can proceed.
+		\end{itemize}
+
+	\vfill
+	\item However, AI can suffer from slow convergence.
+	%	\vfill
+	%\item Consider the following loop:
+	\end{itemize}
+
+	\vfill
+
+	\begin{center}
+	\verb!for (x = 0; x < 9999; x++) { ... }!
+	\end{center}
+
+	\vfill
+	%\texttt{x} inside the loop:
+	\[
+		\langle [0, 0], [0, 1], [0, 2], \ldots, [0, 9998], [0, 9999], [0, 9999]\rangle
+	\]
+
+	\vfill
+	\begin{itemize}
+	\item Solving will be too slow.
+	\end{itemize}
+
+\end{frame}
+
+
+\subsection{Widening}
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+	\begin{itemize}
+	\item It is common to accelerate convergence with widening.
+		\begin{itemize}
+		\item If after $x$ iterations, convergence is not met, widen.
+		\end{itemize}
+	\end{itemize}
+
+	\vfill
+
+	\[
+	\begin{aligned}
+	\triangledown_I : I &\rightarrow I\\
+	\bot_I \triangledown_I [c, d] &= [c, d]\\
+	[a, b] \triangledown_I [c, d] &= [\text{if~} c < a \text{~then~} -\infty \text{~else~} a,\\
+		&~~~\text{~if~} d >b \text{~then~} +\infty \text{~else~} b]
+	\end{aligned}
+	\]
+
+	\vfill
+
+	E.g. Widen after 3 iterations:
+	\[
+	\langle [0, 0], [0, 1], [0, 2], [0, +\infty], [0, +\infty]\rangle
+	\]
+
+	\vfill
+
+
+	\begin{itemize}
+	\item Imprecise.
+	\end{itemize}
+
+\end{frame}
+
+
+\subsection{Range Analysis as an Optimisation Problem}
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+	\begin{itemize}
+	\item My approach is different.
+
+	\vfill
+
+	\item Instead of solving the abstract semantics to a FP, the abstract semantics are decomposed into a series of linear programs.
+
+	\vfill
+
+	\item This allows the solution to the abstract semantics to be found directly.
+
+	\vfill
+
+	\item No widening required, therefore precise.
+
+	\end{itemize}
+
+\end{frame}
+
+\subsection{Range Analysis as an Optimisation Problem (2)}
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+\begin{lstlisting}[showlines=true, numbers=left,escapechar=\!]
+i := 10;
+while (i !$\geq$! m)
+        m := m + 1;
+endwhile
+// last program point
+\end{lstlisting}
+
+\vfill
+
+\[
+\begin{array}{rl}
+S_1' =& \langle [-2^{31}, 2^{31}-1], [5, 20]\rangle\\
+S_2'^{\star} =& \langle [10, 10], m\rangle~\text{where}~ \langle i, m\rangle = S_1'\\
+S_2' =& S_2'^{\star} \sqcup S_4'\\
+S_3' =& \langle [l_i, u_i] \sqcap [l_m, 2^{31}-1], [l_m, u_m] \sqcap [-2^{31}, u_i]\rangle\\
+             &\qquad\text{where}~\langle [l_i, u_i], [l_m, u_m]\rangle = S_2'\\
+S_4' =& \langle i, [min(l_m + 1, 2^{31}-1), min(u_m + 1, 2^{31} - 1)]\rangle\\
+             &\qquad\text{where}~\langle i, [l_m, u_m]\rangle = S'_3\\
+S_5' =& \langle [l_i, u_i] \sqcap [-2^{31}, u_m-1], [l_m, u_m] \sqcap [l_i+1, 2^{31}-1]\rangle\\
+     &\qquad\text{where}~\langle [l_i, u_i], [l_m, u_m]\rangle = S_2'\\
+\end{array}
+\]
+
+\end{frame}
+
+
+\subsection{Range Analysis as an Optimisation Problem (3)}
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+\begin{itemize}
+\item Is decomposed into:
+\end{itemize}
+
+\[
+\small
+minimise\quad\sum_{j=1}^{5} (u_{i,j} - l_{i,j}) + \sum_{j=1}^{5} (u_{m,j} - l_{m,j})~s.t.
+\]
+\[
+\footnotesize
+\begin{array}{rcl@{\quad}c@{\quad}rcl@{\quad}clll}
+l_{i,1} & = & -2^{31} & \wedge & u_{i,1} & = & 2^{31} - 1 & \wedge &  \\
+l_{i,2{\star}} & = & 10 & \wedge & u_{i,2{\star}} & = & 10 & \wedge & \\
+l_{i,2} & = & min(l_{i,2{\star}}, l_{i,4}) & \wedge & u_{i,2} & = & max(u_{i,2{\star}}, u_{i,4}) & \wedge \\
+l_{i,3} & = & max(l_{i,2}, l_{m,2}) & \wedge & u_{i,3} & = & u_{i,2} & \wedge \\
+l_{i,4} & = & l_{i,3} & \wedge & u_{i,4} & = & u_{i,3} & \wedge \\
+l_{i,5} & = & l_{i,2} & \wedge & u_{i,5} & = & min(u_{i,2}, u_{m,2}-1) & \wedge \\
+%\hline
+l_{m,1} & = & 5 & \wedge & u_{m,1} & = & 20 & \wedge \\
+l_{m,2{\star}} & = & l_{m,1} & \wedge & u_{m,2{\star}} & = & u_{m,1} & \wedge \\
+l_{m,2} & = & min(l_{m,2{\star}}, l_{m,4}) & \wedge & u_{m,2} & = & max(u_{m,2{star}}, u_{m,4}) & \wedge \\
+l_{m,3} & = & l_{m,2} & \wedge & u_{m,3} & = & min(u_{i,2}, u_{m,2}) & \wedge \\
+l_{m,4} & = & min({l_{m,3}} + 1, 2^{31} - 1) & \wedge & u_{m,4} & = & min(u_{m,3} + 1, 2^{31} - 1) & \wedge \\
+l_{m,5} & = & max(l_{m,2}, l_{i,2} + 1) & \wedge & u_{m,5} & = & u_{m,2}
+\end{array}
+\]
+
+\end{frame}
+
+
+\subsection{Range Analysis as an Optimisation Problem (4)}
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
+
+\begin{itemize}
+\item The min/max terms are non convex.
+\vfill
+\item $z = min(x, y) \equiv z \leq x \wedge z \leq y \wedge (z = x \vee z = y)$.
+\vfill
+\item Use a binary search with heuristics to find the best solution.
+\end{itemize}
+
+\vfill
+
+\[
+\begin{array}{rcl}
+S'_1 & = & [-2^{31}, 2^{31} - 1] \times [5, 20] \\
+S'_2 & = & [10, 10] \times [5, 20] \\
+S'_3 & = & [10, 10] \times [5, 10]
+\end{array}
+\quad
+\begin{array}{rcl}
+S'_4 & = & [10, 10] \times [6, 11] \\
+S'_5 & = & [10, 10] \times [11, 20]
+\end{array}
+\]
+
+\end{frame}
+
+\section{And Next?}
+
+\begin{frame}
+  \sectionpage
+\end{frame}
+
+
+\subsection{Getting to grips with PyPy}
+\begin{frame}[fragile]
+	\frametitle{\insertsubsection}
 \end{frame}
 
 \end{document}
