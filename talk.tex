@@ -93,7 +93,7 @@
 	\vfill
 	\begin{block}{Reverse Engineering}
                 The art of developing an understanding of a program from
-                the compiled code alone
+                the compiled code alone.
 	\end{block}
 	\vfill
 	\begin{block}{Verification}
@@ -128,7 +128,7 @@
 
 	\begin{itemize}
 		\vfill
-	\item Checking memory safety.
+	\item Checking for memory safety.
 		\vfill
 	\item Proving error state unreachability.
 		\vfill
@@ -175,9 +175,9 @@
 	\vfill
 
 	\begin{itemize}
-		\item It is not the source code that is executed\footnote{Forget scripting languages and VMs for now.}.
+		\item It is not the source code that is executed.%\footnote{Forget scripting languages and VMs for now.}.
+		\item Compilers are buggy.
 		\item Compilers are often ``too clever''.
-		\item Compilers are also buggy.
 	\end{itemize}
 	\vfill
 
@@ -191,12 +191,23 @@
 
 \end{frame}
 
-\subsection{The General Approach}
+\subsection{Collecting Potential Values}
 \begin{frame}[fragile]
 	\frametitle{\insertsubsection}
 
-        Often, reversing and verification amounts to collecting the
-        potential values that may arise at each point in a program.
+	\begin{itemize}
+	\item Given the motivation to reverse/verify, how to proceed?
+	\vfill
+	\item Potential values of registers help a lot.
+		\begin{itemize}
+		\item Branch reachability.
+		\item Memory writes.
+		\item \ldots
+		\end{itemize}
+	\vfill
+	\item Abstract interpretation.
+	\end{itemize}
+
 \end{frame}
 
 \subsection{Concrete Interpretation}
@@ -209,9 +220,9 @@
 	\begin{minipage}{.5\textwidth}
 	\begin{tabbing}
 		1234\=1234\=1234\=\kill
-		1:\>$x \leftarrow 6$\\
-		2:\>while $x > 0$ do\\
-		3:\>\>x $\leftarrow x - 2$\\
+		1:\>$\mathtt{x} \leftarrow 6$\\
+		2:\>while $\mathtt{x} > 0$ do\\
+		3:\>\>$\mathtt{x} \leftarrow \mathtt{x} - 2$\\
 		4:\>done\\
 		5:\>
 	\end{tabbing}
@@ -272,9 +283,9 @@
 	\begin{minipage}{.5\textwidth}
 	\begin{tabbing}
 		1234\=1234\=1234\=\kill
-		1:\>$x \leftarrow {\color{red}{66666}}$\\
-		2:\>while $x > 0$ do\\
-		3:\>\>x $\leftarrow x - 2$\\
+		1:\>$\mathtt{x} \leftarrow {\color{red}{66666}}$\\
+		2:\>while $\mathtt{x} > 0$ do\\
+		3:\>\>$\mathtt{x} \leftarrow \mathtt{x} - 2$\\
 		4:\>done\\
 		5:\>
 	\end{tabbing}
@@ -335,9 +346,9 @@
 	\begin{minipage}{.5\textwidth}
 	\begin{tabbing}
 		1234\=1234\=1234\=\kill
-		1:\>$x \leftarrow 66666$\\
-		2:\>while $x > 0$ do\\
-		3:\>\>x $\leftarrow x - 2$\\
+		1:\>$\mathtt{x} \leftarrow 66666$\\
+		2:\>while $\mathtt{x} > 0$ do\\
+		3:\>\>$\texttt{x} \leftarrow \texttt{x} - 2$\\
 		4:\>done\\
 		5:\>
 	\end{tabbing}
@@ -686,6 +697,7 @@ S'_5 & = & [10, 10] \times [11, 20]
 			\item Registers.
 			\item Stack.
 			\item x86-a-like calling convention (stack-based).
+			\item \ldots
 		\end{itemize}
 		\vfill
 	\item I plan to use RPython to JIT this.
